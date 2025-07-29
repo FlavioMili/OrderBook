@@ -14,7 +14,6 @@ A C++ implementation of a simple Order Book system designed to simulate market o
 ```bash
 git clone https://github.com/FlavioMili/OrderBook.git
 cd OrderBook
-mkdir build
 make
 cd build
 ./OrderBook
@@ -22,13 +21,14 @@ cd build
 
 ## Example
 This is how the output looks like<br>
-<img width="259" alt="Screenshot 2024-12-25 at 16 21 27" src="https://github.com/user-attachments/assets/10034454-7abc-4578-85ec-f4505bb95b82" />
+<img width="1030" height="614" alt="image" src="https://github.com/user-attachments/assets/228436e7-3728-4be7-9099-a2757952deb3" />
+
 
 
 ## Performance with bigger example
-In the scale of millions of orders it has an average of 600 nanoseconds to process a single order
+In the scale of tens of millions of orders it takes an average of 193 nanoseconds to process a single order
 ``` 
-Number of orders to process: 1234567
-Average time to process an order: 593.097 nanoseconds
-Total time: 0.732217 seconds
+Number of orders to process: 12345678
+Average time to process an order: 193.859 nanoseconds
+Total time to process 12345678 orders: 2.39332 seconds
 ```
