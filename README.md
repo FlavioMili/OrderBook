@@ -21,7 +21,7 @@ cd build
 
 ## Example
 This is how the output looks like<br>
-<img width="1030" height="614" alt="image" src="https://github.com/user-attachments/assets/228436e7-3728-4be7-9099-a2757952deb3" />
+<img width="493" height="415" alt="image" src="https://github.com/user-attachments/assets/efb7bbc0-92ef-4144-8fe8-dd57bb78093b" />
 
 
 
