@@ -1,86 +1,84 @@
 #include "../include/Order.h"
 #include "../include/OrderBook.h"
 
-void OrderBook::processOrders(OrderSide side, double price, int quantity, time_t timestamp, int ID){
-   if (side == OrderSide::BUY) { 
-      while (quantity > 0 && !SellOrders.empty() && price >= askMin.first) {
-         auto& sellOrdersAtPrice = SellOrders[askMin.first];
-         Order* sellOrder = &sellOrdersAtPrice.front();
+void OrderBook::updateBidMax() {
+  if (BuyOrders.empty()) {
+    bidMax = {-std::numeric_limits<double>::infinity(), nullptr};
+  } else {
+    auto it = BuyOrders.begin();
+    bidMax.first = it->first;
+    bidMax.second = it->second.front();
+  }
+}
 
-         if (price >= sellOrder->price) {
-            if (quantity < sellOrder->quantity) {
-            sellOrder->quantity -= quantity;
-            quantity = 0;
-         } else {
-            quantity -= sellOrder->quantity;
-            sellOrdersAtPrice.erase(sellOrdersAtPrice.begin()); 
+void OrderBook::updateAskMin() {
+  if (SellOrders.empty()) {
+    askMin = {std::numeric_limits<double>::infinity(), nullptr};
+  } else {
+    auto it = SellOrders.begin();
+    askMin.first = it->first;
+    askMin.second = it->second.front();
+  }
+}
 
-            if (sellOrdersAtPrice.empty()) {
-               SellOrders.erase(askMin.first);  
+void OrderBook::processBuyMatching(double price, int& quantity) {
+  while (quantity > 0 && !SellOrders.empty() && price >= askMin.first) {
+    auto& sellOrdersAtPrice = SellOrders[askMin.first];
+    Order* sellOrder = sellOrdersAtPrice.front();
 
-               if (!SellOrders.empty()) {
-                  askMin.first = SellOrders.begin()->first;
-                  askMin.second = &SellOrders[askMin.first].front();
-               } else {
-                  askMin.second = nullptr;
-                  }
-               }
-            }
-         }
+    if (quantity < sellOrder->quantity) {
+      sellOrder->quantity -= quantity;
+      quantity = 0;
+    } else {
+      quantity -= sellOrder->quantity;
+      removeFrontOrder(SellOrders, askMin.first);
+      updateAskMin();
+    }
+  }
+}
+
+void OrderBook::processSellMatching(double price, int& quantity) {
+  while (quantity > 0 && !BuyOrders.empty() && price <= bidMax.first) {
+    auto& buyOrdersAtPrice = BuyOrders[bidMax.first];
+    Order* buyOrder = buyOrdersAtPrice.front();
+
+    if (quantity < buyOrder->quantity) {
+      buyOrder->quantity -= quantity;
+      quantity = 0;
+    } else {
+      quantity -= buyOrder->quantity;
+      removeFrontOrder(BuyOrders, bidMax.first);
+      updateBidMax();
+    }
+  }
+}
+
+void OrderBook::processOrders(OrderSide side, double price, int quantity, time_t timestamp, int ID) {
+  if (side == OrderSide::BUY) {
+    processBuyMatching(price, quantity);
+    if (quantity > 0) {
+      Order* newOrder = new Order(timestamp, OrderSide::BUY, price, quantity, ID);
+      BuyOrders[price].push_back(newOrder);
+      if (BuyOrders.size() == 1 || price > bidMax.first) {
+        bidMax = {price, newOrder};
       }
-
-      if (quantity > 0) {
-         BuyOrders[price].emplace_back(timestamp, OrderSide::BUY, price, quantity, ID);
-
-         bidMax.first = price;
-         bidMax.second = &BuyOrders[price].back();
+    }
+  } else {
+    processSellMatching(price, quantity);
+    if (quantity > 0) {
+      Order* newOrder = new Order(timestamp, OrderSide::SELL, price, quantity, ID);
+      SellOrders[price].push_back(newOrder);
+      if (SellOrders.size() == 1 || price < askMin.first) {
+        askMin = {price, newOrder};
       }
-   } else {  // SELL
-      while (quantity > 0 && !BuyOrders.empty() && price <= bidMax.first) {
-         auto& buyOrdersAtPrice = BuyOrders[bidMax.first];
-         Order* buyOrder = &buyOrdersAtPrice.front();
-
-         if (price <= buyOrder->price) {
-            if (quantity < buyOrder->quantity) {
-            buyOrder->quantity -= quantity;
-            quantity = 0;
-         } else {
-            quantity -= buyOrder->quantity;
-            buyOrdersAtPrice.erase(buyOrdersAtPrice.begin());
-            if (buyOrdersAtPrice.empty()) {
-               BuyOrders.erase(bidMax.first);
-
-               if (!BuyOrders.empty()) {
-                  bidMax.first = BuyOrders.begin()->first;
-                  bidMax.second = &BuyOrders[bidMax.first].front();
-               } else {
-                  bidMax.second = nullptr;
-                  }
-               }
-            }
-         }
-      }
-
-      if (quantity > 0) {
-      SellOrders[price].emplace_back(timestamp, OrderSide::SELL, price, quantity, ID);
-      askMin.first = price;
-      askMin.second = &SellOrders[price].back();
-      }
-   }
+    }
+  }
 }
 
 void OrderBook::printOrderBook() {
-   std::cout << "Buy Orders:\n";
-   for (const auto& [price, orders] : BuyOrders) {
-      for (const auto& order : orders) {
-      std::cout << "ID: " << order.ID << ", Price: " << order.price << ", Quantity: " << order.quantity << "\n";
-      }
-   }
+  std::cout << "Buy Orders:\n";
+  printOrders(BuyOrders);
 
-   std::cout << "Sell Orders:\n";
-   for (const auto& [price, orders] : SellOrders) {
-      for (const auto& order : orders) {
-         std::cout << "ID: " << order.ID << ", Price: " << order.price << ", Quantity: " << order.quantity << "\n";
-      }
-   }
+  std::cout << "Sell Orders:\n";
+  printOrders(SellOrders);
 }

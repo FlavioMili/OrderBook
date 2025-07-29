@@ -12,25 +12,70 @@ class TestOrderBook;
 
 class OrderBook {
 private:
-   std::map<double, std::vector<Order>, std::greater<double>> BuyOrders;
-   std::map<double, std::vector<Order>> SellOrders;
-   std::pair<double, Order*> bidMax {};
-   std::pair<double, Order*> askMin {std::numeric_limits<double>::infinity(), nullptr};
+  std::map<double, std::vector<Order*>, std::greater<double>> BuyOrders;
+  std::map<double, std::vector<Order*>> SellOrders;
+  std::pair<double, Order*> bidMax {};
+  std::pair<double, Order*> askMin {std::numeric_limits<double>::infinity(), nullptr};
+
+  void updateBidMax();
+  void updateAskMin();
+  void processBuyMatching(double price, int& quantity);
+  void processSellMatching(double price, int& quantity);
+
+  template<typename MapType>
+  void removeFrontOrder(MapType& ordersMap, double price) {
+    auto& ordersAtPrice = ordersMap[price];
+    delete ordersAtPrice.front();
+    ordersAtPrice.erase(ordersAtPrice.begin());
+
+    if (ordersAtPrice.empty()) {
+      ordersMap.erase(price);
+    }
+  }
+  template<typename MapType>
+  void printOrders(const MapType& ordersMap) const {
+    for (const auto& [price, orders] : ordersMap) {
+      for (const auto& order : orders) {
+        std::cout << "ID: " << order->ID 
+          << ", Price: " << order->price 
+          << ", Quantity: " << order->quantity << "\n";
+      }
+    }
+  }
 
 public: 
-   void addOrder(time_t timestamp, OrderSide side, double price, int quantity, int ID);
-   void processOrders(OrderSide side, double price, int quantity, time_t timestamp, int ID);
-   void printOrderBook();
-   bool cancelOrder(int orderID);
-   bool modifyOrder(int orderID, double newPrice, int newQuantity);
-const std::map<double, std::vector<Order>, std::greater<double>>& getBuyOrders() const {
-       return BuyOrders;
-   }
+  template<typename MapType>
+  void static printHistogram(const MapType& ordersMap, int blockSize, const std::string& color) {
+    for (const auto& [price, orders] : ordersMap) {
+      int totalQuantity = 0;
+      for (const auto& order : orders) {
+        totalQuantity += order->quantity;
+      }
+      int symbolCount = totalQuantity / blockSize;
 
-   const std::map<double, std::vector<Order>>& getSellOrders() const {
-       return SellOrders;
-   }
-   friend class TestOrderBook;
+      std::cout << price << ": " << color;
+      for (int i = 0; i < symbolCount; ++i) {
+        std::cout << "\u2587";
+      }
+      std::cout << "\033[0m\n"; // Reset color
+    }
+  }
+
+  void processOrders(OrderSide side, double price, int quantity, time_t timestamp, int ID);
+  void printOrderBook();
+
+  // TODO later on
+  // bool cancelOrder(int orderID);
+  // bool modifyOrder(int orderID, double newPrice, int newQuantity);
+
+  const std::map<double, std::vector<Order*>, std::greater<double>>& getBuyOrders() const {
+    return BuyOrders;
+  }
+
+  const std::map<double, std::vector<Order*>>& getSellOrders() const {
+    return SellOrders;
+  }
+  friend class TestOrderBook;
 };
 
 #endif // !ORDERBOOK_INCLUDED

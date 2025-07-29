@@ -1,6 +1,6 @@
 # Compiler and Flags
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -I./include
+CXXFLAGS = -std=c++17 -Wall -I./include -O3 -march=native -flto -DNDEBUG -ffast-math -pipe
 
 # Directories
 SRC_DIR = src
@@ -24,7 +24,7 @@ $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)
 
 # Build the final executable from object files
-$(EXEC): $(OBJ_FILES)
+$(EXEC): $(OBJ_FILES) | $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
 # Compile source files to object files
