@@ -22,7 +22,7 @@ void simulateMarket(OrderBook& book, long long numOrders) {
   for (int i = 0; i < numOrders; ++i) {
     auto start = std::chrono::high_resolution_clock::now();
     OrderSide side = ((rand() & 2) == 0) ? OrderSide::BUY : OrderSide::SELL;
-    double price = 60.0 + (rand() % 501) / 21.5;
+    double price = 50.0 + (rand() % 501) / 10.0;
     int quantity = rand() % 50 + 1;
     time_t timestamp = time(nullptr);
     int ID = i + 1;
@@ -39,7 +39,8 @@ void simulateMarket(OrderBook& book, long long numOrders) {
   printOrderBookHistogram(book, numOrders);
   double averageTime = static_cast<double>(totalTime) / numOrders;
   std::cout << "Average time to process an order: " << averageTime << " nanoseconds\n";
-  std::cout << "Total time: " << static_cast<double>(totalTime) / 1e9 << " seconds\n";
+  std::cout << "Total time to process " << numOrders << " orders: "
+    << static_cast<double>(totalTime) / 1e9 << " seconds\n";
 }
 
 int main() {
