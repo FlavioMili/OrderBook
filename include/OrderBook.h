@@ -2,20 +2,28 @@
 #define ORDERBOOK_INCLUDED
 
 #include "Order.h"
+#include "OrderPool.h"
 #include <limits>
 #include <map>
 #include <utility>
-#include <vector>
+#include <deque>
 #include <iostream>
+#include <memory>
 
 class TestOrderBook;
 
+struct BestPrice {
+    double price;
+    Order* order;
+};
+
 class OrderBook {
 private:
-  std::map<double, std::vector<Order*>, std::greater<double>> BuyOrders;
-  std::map<double, std::vector<Order*>> SellOrders;
-  std::pair<double, Order*> bidMax {};
-  std::pair<double, Order*> askMin {std::numeric_limits<double>::infinity(), nullptr};
+  OrderPool orderPool;
+  std::map<double, std::deque<Order*>, std::greater<double>> BuyOrders;
+  std::map<double, std::deque<Order*>> SellOrders;
+  BestPrice bidMax {};
+  BestPrice askMin {std::numeric_limits<double>::infinity(), nullptr};
 
   void updateBidMax();
   void updateAskMin();
@@ -25,8 +33,8 @@ private:
   template<typename MapType>
   void removeFrontOrder(MapType& ordersMap, double price) {
     auto& ordersAtPrice = ordersMap[price];
-    delete ordersAtPrice.front();
-    ordersAtPrice.erase(ordersAtPrice.begin());
+    orderPool.deallocate(ordersAtPrice.front());
+    ordersAtPrice.pop_front();
 
     if (ordersAtPrice.empty()) {
       ordersMap.erase(price);
@@ -43,7 +51,9 @@ private:
     }
   }
 
-public: 
+public:
+  OrderBook(size_t poolSize);
+
   template<typename MapType>
   void static printHistogram(const MapType& ordersMap, int blockSize, const std::string& color) {
     for (const auto& [price, orders] : ordersMap) {
@@ -68,11 +78,11 @@ public:
   // bool cancelOrder(int orderID);
   // bool modifyOrder(int orderID, double newPrice, int newQuantity);
 
-  const std::map<double, std::vector<Order*>, std::greater<double>>& getBuyOrders() const {
+  const std::map<double, std::deque<Order*>, std::greater<double>>& getBuyOrders() const {
     return BuyOrders;
   }
 
-  const std::map<double, std::vector<Order*>>& getSellOrders() const {
+  const std::map<double, std::deque<Order*>>& getSellOrders() const {
     return SellOrders;
   }
   friend class TestOrderBook;

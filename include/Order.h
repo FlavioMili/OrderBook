@@ -6,16 +6,16 @@
 enum class OrderSide { BUY, SELL };
 
 struct Order {
-  time_t timestamp;
-  OrderSide side;
   double price;
+  time_t timestamp;
   int quantity;
   int ID;
+  OrderSide side;
 
   Order(time_t timestamp, OrderSide side,
         double price, int quantity, int ID)
-  :timestamp(timestamp), side(side), price(price),
-    quantity(quantity), ID(ID) {};
+  :price(price), timestamp(timestamp), quantity(quantity),
+    ID(ID), side(side) {};
 
   Order() = default;
 
@@ -31,4 +31,3 @@ struct Order {
 }; 
 
 #endif // !ORDER_INCLUDED
-

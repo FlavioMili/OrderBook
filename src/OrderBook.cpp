@@ -1,13 +1,16 @@
 #include "../include/Order.h"
 #include "../include/OrderBook.h"
+#include <memory>
+
+OrderBook::OrderBook(size_t poolSize) : orderPool(poolSize) {}
 
 void OrderBook::updateBidMax() {
   if (BuyOrders.empty()) {
     bidMax = {-std::numeric_limits<double>::infinity(), nullptr};
   } else {
     auto it = BuyOrders.begin();
-    bidMax.first = it->first;
-    bidMax.second = it->second.front();
+    bidMax.price = it->first;
+    bidMax.order = it->second.front();
   }
 }
 
@@ -16,14 +19,14 @@ void OrderBook::updateAskMin() {
     askMin = {std::numeric_limits<double>::infinity(), nullptr};
   } else {
     auto it = SellOrders.begin();
-    askMin.first = it->first;
-    askMin.second = it->second.front();
+    askMin.price = it->first;
+    askMin.order = it->second.front();
   }
 }
 
 void OrderBook::processBuyMatching(double price, int& quantity) {
-  while (quantity > 0 && !SellOrders.empty() && price >= askMin.first) {
-    auto& sellOrdersAtPrice = SellOrders[askMin.first];
+  while (quantity > 0 && !SellOrders.empty() && price >= askMin.price) {
+    auto& sellOrdersAtPrice = SellOrders[askMin.price];
     Order* sellOrder = sellOrdersAtPrice.front();
 
     if (quantity < sellOrder->quantity) {
@@ -31,15 +34,15 @@ void OrderBook::processBuyMatching(double price, int& quantity) {
       quantity = 0;
     } else {
       quantity -= sellOrder->quantity;
-      removeFrontOrder(SellOrders, askMin.first);
+      removeFrontOrder(SellOrders, askMin.price);
       updateAskMin();
     }
   }
 }
 
 void OrderBook::processSellMatching(double price, int& quantity) {
-  while (quantity > 0 && !BuyOrders.empty() && price <= bidMax.first) {
-    auto& buyOrdersAtPrice = BuyOrders[bidMax.first];
+  while (quantity > 0 && !BuyOrders.empty() && price <= bidMax.price) {
+    auto& buyOrdersAtPrice = BuyOrders[bidMax.price];
     Order* buyOrder = buyOrdersAtPrice.front();
 
     if (quantity < buyOrder->quantity) {
@@ -47,7 +50,7 @@ void OrderBook::processSellMatching(double price, int& quantity) {
       quantity = 0;
     } else {
       quantity -= buyOrder->quantity;
-      removeFrontOrder(BuyOrders, bidMax.first);
+      removeFrontOrder(BuyOrders, bidMax.price);
       updateBidMax();
     }
   }
@@ -57,20 +60,20 @@ void OrderBook::processOrders(OrderSide side, double price, int quantity, time_t
   if (side == OrderSide::BUY) {
     processBuyMatching(price, quantity);
     if (quantity > 0) {
-      Order* newOrder = new Order(timestamp, OrderSide::BUY, price, quantity, ID);
-      BuyOrders[price].push_back(newOrder);
-      if (BuyOrders.size() == 1 || price > bidMax.first) {
+      Order* newOrder = orderPool.allocate(timestamp, OrderSide::BUY, price, quantity, ID);
+      if (BuyOrders.empty() || price > bidMax.price) {
         bidMax = {price, newOrder};
       }
+      BuyOrders[price].push_back(newOrder);
     }
   } else {
     processSellMatching(price, quantity);
     if (quantity > 0) {
-      Order* newOrder = new Order(timestamp, OrderSide::SELL, price, quantity, ID);
-      SellOrders[price].push_back(newOrder);
-      if (SellOrders.size() == 1 || price < askMin.first) {
+      Order* newOrder = orderPool.allocate(timestamp, OrderSide::SELL, price, quantity, ID);
+      if (SellOrders.empty() || price < askMin.price) {
         askMin = {price, newOrder};
       }
+      SellOrders[price].push_back(newOrder);
     }
   }
 }

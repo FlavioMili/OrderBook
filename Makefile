@@ -1,6 +1,6 @@
 # Compiler and Flags
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -I./include -O3 -march=native -flto -DNDEBUG -ffast-math -pipe
+CXXFLAGS = -std=c++17 -Wall -I./include -O2 -march=native -flto -DNDEBUG -ffast-math -pipe
 
 # Directories
 SRC_DIR = src
@@ -8,9 +8,9 @@ BUILD_DIR = build
 OBJ_DIR = $(BUILD_DIR)/obj
 
 # Files
-SRC_FILES = $(SRC_DIR)/OrderBook.cpp $(SRC_DIR)/TestOrderBook.cpp
+SRC_FILES = $(SRC_DIR)/OrderBook.cpp $(SRC_DIR)/TestOrderBook.cpp $(SRC_DIR)/OrderPool.cpp
 OBJ_FILES = $(SRC_FILES:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
-EXEC = $(BUILD_DIR)/OrderBook
+EXEC = OrderBook
 
 # Targets
 all: $(EXEC)

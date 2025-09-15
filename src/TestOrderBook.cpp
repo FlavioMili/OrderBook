@@ -45,10 +45,10 @@ void simulateMarket(OrderBook& book, long long numOrders) {
 
 int main() {
   std::ios_base::sync_with_stdio(false);
-  OrderBook book;
   long long numOrders;
   std::cout << "Number of orders to process: ";
   std::cin >> numOrders;
+  OrderBook book(numOrders);
   simulateMarket(book, numOrders);
   return 0;
 }
