@@ -26,9 +26,9 @@ This is how the output looks like<br>
 
 
 ## Performance with bigger example
-In the scale of hundred of millions of orders it takes an average of 76 nanoseconds to process a single order
+In the scale of **billions** of orders it takes an average of **33 nanoseconds** to process a single order
 ``` 
-Number of orders to process: 123456789
-Average time to process an order: 75.9476 nanoseconds
-Total time to process 123456789 orders: 9.37624 seconds
+--- Simulation Finished ---
+Average time to process an order: 32.91 nanoseconds
+Total time to process 1234567890 orders: 40.63 seconds
 ```
