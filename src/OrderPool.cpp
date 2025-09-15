@@ -1,31 +1,36 @@
 #include "../include/OrderPool.h"
 #include <stdexcept>
 
-OrderPool::OrderPool(size_t size) {
-    pool.reserve(size);
-    free_list.reserve(size);
-    for (size_t i = 0; i < size; ++i) {
-        pool.push_back(std::make_unique<Order>());
-        free_list.push_back(pool.back().get());
-    }
+OrderPool::OrderPool() {
+  memory_chunks.reserve(16);
+  free_list.reserve(CHUNK_SIZE);
 }
 
-Order* OrderPool::allocate(time_t timestamp, OrderSide side, double price, int quantity, int ID) {
-    if (free_list.empty()) {
-        throw std::runtime_error("OrderPool exhausted");
-    }
-    Order* order = free_list.back();
-    free_list.pop_back();
-    
-    order->price = price;
-    order->timestamp = timestamp;
-    order->quantity = quantity;
-    order->ID = ID;
-    order->side = side;
+void OrderPool::grow() {
+  auto new_chunk = std::make_unique<std::vector<Order>>(CHUNK_SIZE);
+  for (auto& order : *new_chunk) {
+    free_list.push_back(&order);
+  }
+  memory_chunks.push_back(std::move(new_chunk));
+}
 
-    return order;
+Order* OrderPool::allocate(uint32_t timestamp, bool isBuy, double price, uint32_t quantity, uint32_t ID) {
+  if (free_list.empty()) {
+    grow();
+  }
+
+  Order* order = free_list.back();
+  free_list.pop_back();
+
+  order->price = price;
+  order->ID = ID;
+  order->timestamp = timestamp;
+  order->quantity = quantity;
+  order->isBuy = isBuy;
+
+  return order;
 }
 
 void OrderPool::deallocate(Order* order) {
-    free_list.push_back(order);
+  free_list.push_back(order);
 }

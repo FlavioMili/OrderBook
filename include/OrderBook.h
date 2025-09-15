@@ -3,88 +3,44 @@
 
 #include "Order.h"
 #include "OrderPool.h"
-#include <limits>
-#include <map>
-#include <utility>
+#include <vector>
 #include <deque>
-#include <iostream>
-#include <memory>
+#include <cmath>
 
 class TestOrderBook;
-
-struct BestPrice {
-    double price;
-    Order* order;
-};
 
 class OrderBook {
 private:
   OrderPool orderPool;
-  std::map<double, std::deque<Order*>, std::greater<double>> BuyOrders;
-  std::map<double, std::deque<Order*>> SellOrders;
-  BestPrice bidMax {};
-  BestPrice askMin {std::numeric_limits<double>::infinity(), nullptr};
+  std::vector<std::deque<Order*>> BuyOrders;
+  std::vector<std::deque<Order*>> SellOrders;
 
-  void updateBidMax();
-  void updateAskMin();
-  void processBuyMatching(double price, int& quantity);
-  void processSellMatching(double price, int& quantity);
+  static constexpr double minPrice = 50.0;
+  static constexpr double tickSize = 0.1;
+  static constexpr size_t priceLevels = 501;
 
-  template<typename MapType>
-  void removeFrontOrder(MapType& ordersMap, double price) {
-    auto& ordersAtPrice = ordersMap[price];
-    orderPool.deallocate(ordersAtPrice.front());
-    ordersAtPrice.pop_front();
+  int bestBidIndex = -1;
+  int bestAskIndex = -1;
 
-    if (ordersAtPrice.empty()) {
-      ordersMap.erase(price);
-    }
+  size_t priceToIndex(double price) const {
+    return static_cast<size_t>(std::round((price - minPrice) / tickSize));
   }
-  template<typename MapType>
-  void printOrders(const MapType& ordersMap) const {
-    for (const auto& [price, orders] : ordersMap) {
-      for (const auto& order : orders) {
-        std::cout << "ID: " << order->ID 
-          << ", Price: " << order->price 
-          << ", Quantity: " << order->quantity << "\n";
-      }
-    }
+
+  double indexToPrice(size_t index) const {
+    return minPrice + (index * tickSize);
   }
+
+  void updateBestBid();
+  void updateBestAsk();
+  void processBuyMatching(uint32_t& quantity, size_t index);
+  void processSellMatching(uint32_t& quantity, size_t index);
+  void removeFrontOrder(bool isBuySide, size_t index);
 
 public:
-  OrderBook(size_t poolSize);
+  OrderBook();
+  void processOrders(bool isBuy, double price, uint32_t quantity, uint32_t timestamp, uint32_t ID);
+  void printOrderBookHistogram(int blockSize) const;
 
-  template<typename MapType>
-  void static printHistogram(const MapType& ordersMap, int blockSize, const std::string& color) {
-    for (const auto& [price, orders] : ordersMap) {
-      int totalQuantity = 0;
-      for (const auto& order : orders) {
-        totalQuantity += order->quantity;
-      }
-      int symbolCount = totalQuantity / blockSize;
-
-      std::cout << price << ": " << color;
-      for (int i = 0; i < symbolCount; ++i) {
-        std::cout << "\u2587";
-      }
-      std::cout << "\033[0m\n"; // Reset color
-    }
-  }
-
-  void processOrders(OrderSide side, double price, int quantity, time_t timestamp, int ID);
-  void printOrderBook();
-
-  // TODO later on
-  // bool cancelOrder(int orderID);
-  // bool modifyOrder(int orderID, double newPrice, int newQuantity);
-
-  const std::map<double, std::deque<Order*>, std::greater<double>>& getBuyOrders() const {
-    return BuyOrders;
-  }
-
-  const std::map<double, std::deque<Order*>>& getSellOrders() const {
-    return SellOrders;
-  }
   friend class TestOrderBook;
 };
 

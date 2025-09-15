@@ -7,13 +7,19 @@
 
 class OrderPool {
 public:
-    OrderPool(size_t size);
-    Order* allocate(time_t timestamp, OrderSide side, double price, int quantity, int ID);
-    void deallocate(Order* order);
+  OrderPool();
+  Order* allocate(uint32_t timestamp, bool isBuy, double price, uint32_t quantity, uint32_t ID);
+  void deallocate(Order* order);
 
 private:
-    std::vector<std::unique_ptr<Order>> pool;
-    std::vector<Order*> free_list;
+  void grow();
+
+  // A chunk size of 2^20 orders. 
+  // 1,048,576 orders * 24 bytes/order = ~25MB per chunk.
+  static constexpr size_t CHUNK_SIZE = 1048576;
+
+  std::vector<std::unique_ptr<std::vector<Order>>> memory_chunks;
+  std::vector<Order*> free_list;
 };
 
 #endif // !ORDER_POOL_INCLUDED
