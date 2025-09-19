@@ -47,7 +47,7 @@ constexpr double staleInstructionProbability = 1.0 / 50'000'000;
 
 // === Benchmark Configuration ===
 const std::string dataFileName = "orders.dat";
-constexpr int numInstructions = 100'000'000;
+constexpr int numInstructions = 1'000'000'000;
 constexpr int histogramBlockSize = 10'000'000;
 
 } // namespace Config

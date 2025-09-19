@@ -14,19 +14,17 @@
 #include "../include/Configuration.h"
 
 MatchingEngine::MatchingEngine() {
-  orderBooks.resize(Config::tickers.size());
-  tickerIdToNameMap.resize(Config::tickers.size());
+    orderBooks.resize(Config::tickers.size());
+    tickerIdToNameMap.resize(Config::tickers.size());
+    for (size_t i = 0; i < Config::tickers.size(); ++i) {
+        orderBooks[i] = std::make_unique<OrderBook>();
+    }
 }
 
 void MatchingEngine::processOrders(uint32_t tickerId, bool isBuy, double price, uint32_t quantity, uint32_t timestamp, uint32_t ID) {
   if (tickerId >= orderBooks.size()) return;
-  // If the order book for this ticker doesn't exist, create it.
-  if (!orderBooks[tickerId]) [[unlikely]] {
-    orderBooks[tickerId] = std::make_unique<OrderBook>();
-  }
   orderBooks[tickerId]->processOrders(isBuy, price, quantity, timestamp, ID, tickerId);
 }
-
 bool MatchingEngine::cancelOrder(uint32_t tickerId, uint32_t ID) {
   if (tickerId >= orderBooks.size() || !orderBooks[tickerId]) return false;
   return orderBooks[tickerId]->cancelOrder(ID);

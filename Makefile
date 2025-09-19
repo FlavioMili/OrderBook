@@ -22,7 +22,7 @@ EXTERN_DIR = extern
 # Source files
 SRC_FILES = $(wildcard $(SRC_DIR)/*.cpp)
 BENCHMARK_FILES = $(wildcard $(BENCHMARK_DIR)/*.cpp)
-GENERATE_DATA_FILES = $(wildcard $(TOOLS_DIR)/*.cpp)
+GENERATE_DATA_FILES = $(wildcard $(TOOLS_DIR)/GenerateData.cpp)
 
 # Object files
 OBJ_FILES = $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SRC_FILES))
@@ -51,6 +51,10 @@ benchmark: $(BENCHMARK_EXEC)
 $(BENCHMARK_EXEC): $(BENCHMARK_OBJ) $(OBJ_FILES) $(BENCHMARK_LIB)
 	@echo "Linking benchmark executable..."
 	@$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+$(RESULTS_EXEC): $(RESULTS_OBJ) $(OBJ_FILES)
+	@echo "Linking results printer..."
+	@$(CXX) $(CXXFLAGS) $(INCLUDES) -o $@ $^ $(LDFLAGS)
 
 # Build the data generator
 generate-data: $(GENERATE_DATA_EXEC)

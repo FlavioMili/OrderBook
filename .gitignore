@@ -8,7 +8,7 @@ OrderBook
 benchmark_runner
 generate_data
 
-orders.dat
+*.dat
 
 .cache/
 *.log
