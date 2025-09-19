@@ -5,8 +5,6 @@
 *.so
 
 OrderBook
-benchmark_runner
-generate_data
 
 *.dat
 
