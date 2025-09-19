@@ -1,3 +1,11 @@
+// ----------------------------------------------------------------------------- //
+//                                                                               //
+//  Order Book Simulator                                                         //
+//  Copyright (c) 2025 Flavio Milinanni. All Rights Reserved.                    //
+//                                                                               //
+// ----------------------------------------------------------------------------- //
+
+
 #ifndef ORDER_POOL_INCLUDED
 #define ORDER_POOL_INCLUDED
 
@@ -8,15 +16,11 @@
 class OrderPool {
 public:
   OrderPool();
-  Order* allocate(uint32_t timestamp, bool isBuy, double price, uint32_t quantity, uint32_t ID);
   void deallocate(Order* order);
+  Order* allocate(uint32_t timestamp, bool isBuy, double price, uint32_t quantity, uint32_t ID, uint32_t tickerId);
 
 private:
   void grow();
-
-  // A chunk size of 2^20 orders. 
-  // 1,048,576 orders * 24 bytes/order = ~25MB per chunk.
-  static constexpr size_t CHUNK_SIZE = 1048576;
 
   std::vector<std::unique_ptr<std::vector<Order>>> memory_chunks;
   std::vector<Order*> free_list;
